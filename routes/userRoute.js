@@ -1,7 +1,7 @@
 const express = require("express");
 const multer = require('multer');
 
-const {createUser, postUser, getSession, getLogout, createSession } = require("../controller/userController.js");
+const {createUser, postUser, getSession, getLogout, createSession, getSessionStore } = require("../controller/userController.js");
 const{createBoard, getContent, getContentCnt} = require("../controller/contentController.js")
 const{createRoom, getRooms} = require("../controller/roomController.js")
 
@@ -34,8 +34,9 @@ route.post("/postUser", postUser)
 route.post("/createSession", createSession)
 
 //get
+route.get("/getSessionStore", getSessionStore)
 route.get("/getSession", getSession)
-route.get("/getLogout", getLogout)
+route.delete("/getLogout", getLogout)
 
 ///////////////작업해아하는user기능
 // route.get("/getUsers:userId",getUsers)

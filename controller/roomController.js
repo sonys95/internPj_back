@@ -46,13 +46,7 @@ const createRoom = async(req,res) => {
   catch(error){
     console.error("서버 에러:", error);
         res.json({ error: "서버 에러" });
-  }finally {
-    // DB연결 해제
-    if (client) {
-        console.log("MongoDB클라이언트 연결 해제")
-        await client.close();
-    }
-}
+  }
   
 }
 
@@ -78,13 +72,7 @@ const getRooms = async(req,res) => {
   }
   }catch(error){
       console.log(`룸 목록 불러오기 실패: ${error}`)
-  }finally {
-    // DB연결 해제
-    if (client) {
-        console.log("MongoDB클라이언트 연결 해제")
-        await client.close();
-    }
-}
+  }
 }
 
 module.exports = {

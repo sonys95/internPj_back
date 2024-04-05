@@ -32,43 +32,23 @@ app.use(
     secret: "my key", // 세션에 대한 암호화에 사용될 키
     resave: true, // 세션 데이터의 변화가 없어도 세션을 다시 저장할지 여부
     saveUninitialized: true, // 초기화되지 않은 세션을 저장할지 여부
-    rolling: true,//세션이 만료되기 전, 새로 고침 또는 페이지 이동이 일어나면 세션 만료를 갱신
+    rolling: false,//세션이 만료되기 전, 새로 고침 또는 페이지 이동이 일어나면 세션 만료를 갱신
     cookie: {
       secure: false ,
-      maxAge: 1000 * 60  // 1분
-      // maxAge: 1000 * 60 * 30 //30분
+      //maxAge: 1000 * 60  // 1분
+       maxAge: 1000 * 60 * 30 //30분
     },
     store: MongoStore.create({
       mongoUrl: MONGOURL,
       dbName: 'test', // 세션 데이터베이스명
-      collectionName: 'sessions' // 세션 컬렉션명
+      collectionName: 'sessions', // 세션 컬렉션명
+      ttl: 1000 * 60//
     }),
   })
 );
 
 /////////////////////////////////////////
-// 유저 정보 확인 라우트
-app.get('/', async(req, res) => {
-  // // 세션에서 유저 정보 확인
-  // client = await MongoClient.connect(MONGOURL);
-  const user = req.session.user;
-  // const db = client.db("test");
-  // const collection = db.collection('sessions');
-  // const sessionData = await collection.findOne({});
-  
-  // const userId = sessionData.user.userId;
-  // const nickName = sessionData.user.nickName;
-  // const profileImg = sessionData.user.profileImg;
 
-  if (user) {
-    console.log("있음")
-
-    // res.send(`현재 로그인한 유저: ${user.username}`);
-  } else {
-    console.log("없음")
-  
-  }
-});
 
 // 로그아웃 처리 라우트
 app.get('/logout', (req, res) => {

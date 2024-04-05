@@ -98,29 +98,32 @@ const postUser = async(req, res) => {
                         nickName: userExist.nickName,
                         profileImg: userExist.profileImg
                     };
-                    ////////////////////////////////////////
-                    const user = req.session.user;
                     
-                    if (user) {
-                        client = await MongoClient.connect(MONGOURL);
-                        const db = client.db("test");
-                        const collection = db.collection('sessions');
-                        const sessionData = await collection.findOne({});
+
+                    ////////////////////////////////////////
+                    // const user = req.session.user;
+                    
+                    // if (user) {
+                    //     client = await MongoClient.connect(MONGOURL);
+                    //     const db = client.db("test");
+                    //     const collection = db.collection('sessions');
+                    //     const sessionData = await collection.findOne({});
                         
-                        const parsedSession = JSON.parse(sessionData.session);
-                        const sessionUserId = parsedSession.user.userId;
+                    //     const parsedSession = JSON.parse(sessionData.session);
+                    //     const sessionUser = parsedSession.user;
 
           
-                        console.log(sessionUserId)
-                        console.log("있음")
+                    //     console.log(sessionUser)
+                    //     console.log(sessionUser.userId)
+                    //     console.log("있음")
                     
-                        // res.send(`현재 로그인한 유저: ${user.username}`);
-                      } else {
-                        console.log("없음")
+                    //     // res.send(`현재 로그인한 유저: ${user.username}`);
+                    //   } else {
+                    //     console.log("없음")
                       
-                      }
+                    //   }
                       ////////////////////////////////////
-                    res.json({ success: true, message: "로그인 성공" });
+                    res.json({ success: true, message: "로그인 성공"});
                 } else {
                     console.log("비밀번호 불일치");
                     res.json({ success: false, message: "아이디 또는 비밀번호를 잘못 입력했습니다.", type: "idpw" });
@@ -136,24 +139,78 @@ const postUser = async(req, res) => {
     } catch (error) {
         console.error("서버 에러:", error);
         res.json({ error: "서버 에러" });
-    } finally {
-        // DB연결 해제
-        if (client) {
-            console.log("MongoDB클라이언트 연결 해제")
-            await client.close();
-        }
-    }
+    } 
 };
 
 
 /////////////////////////////////////////세션 테스트////////////////////////////////////////////////////////
+//세션스토어 확인
+const getSessionStore = async (req, res)=>{
+    try{
+        //브라우저 사용자 쿠키값 추출 + 디코딩
+        const connectSid = req.cookies['connect.sid'];
+        const cookieSessionId = connectSid.split('.')[0].split(':')[1];
+        // console.log("user세션확인시작 준비중")                     
+            // const cookieSessionId = "ZTgV3wjLKfL2KimV-R3hmawhXY1D2B79"
+                console.log("user세션확인")      
+                client = await MongoClient.connect(MONGOURL);
+                const db = await client.db("test");
+                const collection = await db.collection('sessions');
+
+                const sessionId = await collection.findOne({_id: cookieSessionId})
+                const parsedSession = JSON.parse(sessionId.session);
+                const sessionUser = parsedSession.user;
+
+                console.log("-----------------------------")
+                console.log(sessionId)
+                // console.log(cookieSessionId)
+                console.log(sessionUser)
+                
+
+                // console.log(sessionUser)
+                res.send(sessionUser)
+                // res.send({sessionUser: sessionUser, sessionUserId: sessionUserId});
+                // res.send(`현재 로그인한 유저: ${user.username}`);
+                
+                
+                               
+    }catch(error){
+        console.log("세션스토어 없음")
+        console.log("세션스토어 호출 실패: ", error)
+    }
+}
+//세션 스토어 삭제
+const getLogout = async (req, res) => {
+    try {
+         //브라우저 사용자 쿠키값 추출 + 디코딩
+         const connectSid = req.cookies['connect.sid'];
+         const cookieSessionId = connectSid.split('.')[0].split(':')[1];
+
+        const client = await MongoClient.connect(MONGOURL);
+        const db = client.db("test");
+        const collection = db.collection('sessions');
+        
+        // const sessionId = await collection.findOne({_id: cookieSessionId})
+        await collection.deleteOne({_id: cookieSessionId})
+        // console.log(sessionId)
+      
+    
+
+        console.log("세션 삭제 완료");
+        res.send("로그아웃 성공");
+        
+    } catch (error) {
+        console.error("세션 삭제 실패:", error);
+    }
+};
+
 //세션 생성
 const createSession = (req, res)=>{
     try{
         req.session.user={
-            userId: 'exampleUserId',
-            nickname: 'exampleNickname',
-            profileImg: 'exampleProfileImgUrl'
+            userId: 'exampleUserId1',
+            nickname: 'exampleNickname1',
+            profileImg: 'exampleProfileImgUrl1'
         }
         res.send('세션 생성 및 사용자 정보 저장 완료');
     }catch(error){
@@ -175,22 +232,23 @@ const getSession = (req, res)=>{
     }
 }
 
-//로그아웃
-const getLogout = (req, res)=>{
-    try{
-        //세션값이 있다면 세션 삭제
-        if(req.session.user){
-            req.session.destroy()
-            // (()=>{
-            //     res.redirect('/');
-            // });
-            res.send("삭제완료");
-          }
-    }catch(error){
-        //세션값이 없다면 error
-        console.log("로그아웃 실패: ", error)
-    }
-}
+// //로그아웃
+// const getLogout = (req, res)=>{
+//     try{
+//         req.session.destroy()
+//         // //세션값이 있다면 세션 삭제
+//         // if(req.session.user){
+//         //     req.session.destroy()
+//         //     // (()=>{
+//         //     //     res.redirect('/');
+//         //     // });
+//         //     res.send("삭제완료");
+//         //   }
+//     }catch(error){
+//         //세션값이 없다면 error
+//         console.log("로그아웃 실패: ", error)
+//     }
+// }
 
 
 
@@ -229,6 +287,7 @@ module.exports = {
     postUser,
     getSession,
     getLogout,
+    getSessionStore,
 
     createSession
 };

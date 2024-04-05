@@ -42,17 +42,12 @@ const createBoard = async(req,res) => {
     }
      catch (error) {
     console.log(`게시물 등록 실패: ${error}`);
-  }finally {
-    // DB연결 해제
-    if (client) {
-        console.log("MongoDB클라이언트 연결 해제")
-        await client.close();
-    }
-}
+  }
 }
 
 //입장한방의 동일한 roomTitle 의 contents 불러오기
 const getContent = async(req,res) => {
+  
   const client = await MongoClient.connect(MONGOURL);
   try{
     if(client){
@@ -69,7 +64,6 @@ const getContent = async(req,res) => {
     }
     // content가 있을경우
     res.json(board);
- 
 
     }else {
       console.log("MongoDB클라이언트 연결 실패")
@@ -78,13 +72,7 @@ const getContent = async(req,res) => {
    
   }catch(error){
       console.log(`게시물 불러오기 실패: ${error}`)
-  }finally {
-    // DB연결 해제
-    if (client) {
-        console.log("MongoDB클라이언트 연결 해제")
-        await client.close();
-    }
-}
+  }
 }
 
 //게시물 총 갯수 가져오기
@@ -109,13 +97,7 @@ const getContentCnt = async(req, res) =>{
     
   }catch(error){
     console.log(`게시물 카운트 실패: ${error}`) 
-  }finally {
-    // DB연결 해제
-    if (client) {
-        console.log("MongoDB클라이언트 연결 해제")
-        await client.close();
-    }
-}
+  }
 }
 
 module.exports = {
