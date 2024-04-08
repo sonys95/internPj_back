@@ -16,7 +16,7 @@ const createBoard = async(req,res) => {
       const db = client.db("test"); 
       const collection = db.collection('contents');
 
-      const {roomTitle, nickName, profileImg, content} = req.body;
+      const {userId, roomTitle, nickName, profileImg, content} = req.body;
       const currentDate = new Date();
       let image
       // 첨부된 파일이 있다면 imgae경로 함께 저장
@@ -25,6 +25,7 @@ const createBoard = async(req,res) => {
       }
       //게시물 데이터들 DB에 저장
       const result = await collection.insertOne({
+        userId,
         roomTitle, 
         nickName, 
         profileImg, 

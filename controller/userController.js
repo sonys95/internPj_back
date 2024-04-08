@@ -159,26 +159,61 @@ const postUser = async (req, res) => {
 };
 //정보업데이트
 //update
-const userUpdate = async (req, res) => {
-  client = await MongoClient.connect(MONGOURL);
+const userUpdate = async (req, res) => {    
+    client = await MongoClient.connect(MONGOURL);
   try {
+
+    const {userId , nickName, profileImg} = req.body;
+
     const db = client.db("test");
     const collection = db.collection("users");
-    const { userId, nickName } = req.body;
+    const contentsCollection = db.collection("contents");
+
     const userExist = await collection.findOne({ userId: userId });
     if (!userExist) {
       return res.json({ message: "유저가 없음" });
     }
+
+    const nickNameExist = await collection.findOne({ nickName: nickName });
+    if (nickNameExist) {
+      return res.json({ message: "닉네임이 이미 존재합니다" });
+    }
+
     // update code goes here
     const filter = { userId: userId };
     const updateDoc = {
       $set: {
         nickName: nickName,
       },
-    };
-    const result = await collection.updateMany(filter, updateDoc);
+    };    
+    const result = await collection.updateOne(filter, updateDoc);
+     // update code for 'contents' collection
+     const contentFilter = { userId: userId };
+     const contentUpdateDoc = {
+         $set: {
+             nickName: nickName,
+         },
+     };
+     await contentsCollection.updateMany(contentFilter, contentUpdateDoc);
 
+    //해당세션 삭제후 재생성
+    console.log("-------------------삭제후 재생성과정--------------------");
+    const sessioncollection = await db.collection("sessions");
+    const connectSid = await req.cookies["connect.sid"];
+    const cookieSessionId = await connectSid.split(".")[0].split(":")[1];
+    const sessionId = await sessioncollection.findOne({ _id: cookieSessionId });
+    console.log(sessionId);
+    await collection.deleteOne({ _id: cookieSessionId });
+    console.log("-------------------삭제후 재생성과정--------------------");
+    req.session.user = {
+        userId: userExist.userId,
+        nickName: nickName,  // 업데이트된 닉네임으로 변경
+        profileImg: userExist.profileImg,
+      };
+      
     res.json(result);
+
+   
   } catch (error) {
     res.json({ error: "서버에러" });
   }
@@ -207,12 +242,13 @@ const userDelete = async (req, res) => {
 //세션스토어 확인
 const getSessionStore = async (req, res) => {
   try {
+    console.log("connectSid-------------추출중");
     //브라우저 사용자 쿠키값 추출 + 디코딩
-    const connectSid = req.cookies["connect.sid"];
-    const cookieSessionId = connectSid.split(".")[0].split(":")[1];
+    const connectSid = await req.cookies["connect.sid"];
+    const cookieSessionId = await connectSid.split(".")[0].split(":")[1];
     // console.log("user세션확인시작 준비중")
     // const cookieSessionId = "ZTgV3wjLKfL2KimV-R3hmawhXY1D2B79"
-    console.log("user세션확인");
+    console.log(connectSid);
     client = await MongoClient.connect(MONGOURL);
     const db = await client.db("test");
     const collection = await db.collection("sessions");
@@ -239,11 +275,11 @@ const getSessionStore = async (req, res) => {
 const deleteLogout = async (req, res) => {
   try {
     //브라우저 사용자 쿠키값 추출 + 디코딩
-    // const connectSid = req.cookies["connect.sid"];
-    // const cookieSessionId = connectSid.split(".")[0].split(":")[1];
-    // console.log("-------------------쿠키세션아이디--------------------");
-    // console.log(cookieSessionId);
-    const { cookieSessionId } = req.body;
+    const connectSid = req.cookies["connect.sid"];
+    const cookieSessionId = connectSid.split(".")[0].split(":")[1];
+    console.log("-------------------쿠키세션아이디--------------------");
+    console.log(cookieSessionId);
+
 
     const client = await MongoClient.connect(MONGOURL);
     const db = client.db("test");
@@ -254,6 +290,8 @@ const deleteLogout = async (req, res) => {
     await collection.deleteOne({ _id: cookieSessionId });
 
     console.log("세션 삭제 완료");
+
+    res.clearCookie("connect.sid");     
     res.send("로그아웃 성공");
   } catch (error) {
     console.error("세션 삭제 실패:", error);

@@ -12,7 +12,7 @@ const MongoStore = require("connect-mongo");
 const route = require('./routes/userRoute.js');
 
 const app = express();
-app.use('/uploads', express.static(path.join(__dirname, '../intern/src/uploads')));
+// app.use('/uploads', express.static(path.join(__dirname, '../intern/src/assets')));
 app.use(bodyParser.json());
 app.use(cookieParser());
 
@@ -42,7 +42,7 @@ app.use(
       mongoUrl: MONGOURL,
       dbName: 'test', // 세션 데이터베이스명
       collectionName: 'sessions', // 세션 컬렉션명
-      ttl: 1000 * 60//
+      // ttl: 1000 * 60//
     }),
   })
 );
@@ -61,7 +61,7 @@ app.get('/logout', (req, res) => {
 // Multer 설정
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-      cb(null, '../intern/src/assets/uploads/');  // 파일 저장 경로 설정
+      cb(null, '../greenMuscat_front/src/assets/uploads/');  // 파일 저장 경로 설정
     },
     filename: (req, file, cb) => {
       cb(null, file.originalname);  // 파일 이름 설정
