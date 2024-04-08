@@ -5,6 +5,7 @@ dotenv.config();
 const MONGOURL = process.env.MONGO_URL;
 const MongoClient = require("mongodb").MongoClient;
 //////////////////////////////////
+const bcrypt = require("bcrypt");
 
 //회원가입(client연결방식)
 const createUser = async (req, res) => {
@@ -23,6 +24,9 @@ const createUser = async (req, res) => {
 
     if (!userExist) {
       if (!nickNameExist) {
+        // 비밀번호 암호화
+        const salt = await bcrypt.genSalt(10); // salt 생성
+        const hashedPassword = await bcrypt.hash(password, salt); // 비밀번호 암호화
         // 임의의 1~5 랜덤값 생성
         const randomValue = Math.floor(Math.random() * 5) + 1;
         let profileImg;
@@ -50,7 +54,7 @@ const createUser = async (req, res) => {
         // 클라이언트 userData(userId, password, nickname) + 서버 userData(profileImg) 값들 DB에 저장
         await collection.insertOne({
           userId,
-          password,
+          password: hashedPassword, // 암호화된 비밀번호 저장,
           nickName,
           profileImg,
         });
@@ -94,12 +98,14 @@ const postUser = async (req, res) => {
       // 클라이언트 로그인창에서 입력한 아이디 DB에 존재하는지 확인
       const userExist = await collection.findOne({ userId });
       // 클라이언트 로그인창에서 입력한 비밀번호 DB에 존재하는지 확인
-      const passwordExist = await collection.findOne(
-        { userId } && { password }
-      );
+
       // 입력한 아이디가 true라면 비밀번호도 true 인지 확인 후 로그인 진행
       if (userExist) {
         console.log("아이디가 존재합니다");
+        const passwordExist = await bcrypt.compare(
+          password,
+          userExist.password
+        );
         if (passwordExist) {
           console.log("비밀번호 일치");
           // 로그인 성공시 세션 생성후 사용자 정보를 세션에 저장
@@ -108,29 +114,6 @@ const postUser = async (req, res) => {
             nickName: userExist.nickName,
             profileImg: userExist.profileImg,
           };
-
-          ////////////////////////////////////////
-          // const user = req.session.user;
-
-          // if (user) {
-          //     client = await MongoClient.connect(MONGOURL);
-          //     const db = client.db("test");
-          //     const collection = db.collection('sessions');
-          //     const sessionData = await collection.findOne({});
-
-          //     const parsedSession = JSON.parse(sessionData.session);
-          //     const sessionUser = parsedSession.user;
-
-          //     console.log(sessionUser)
-          //     console.log(sessionUser.userId)
-          //     console.log("있음")
-
-          //     // res.send(`현재 로그인한 유저: ${user.username}`);
-          //   } else {
-          //     console.log("없음")
-
-          //   }
-          ////////////////////////////////////
           res.json({ success: true, message: "로그인 성공" });
         } else {
           console.log("비밀번호 불일치");
@@ -159,11 +142,10 @@ const postUser = async (req, res) => {
 };
 //정보업데이트
 //update
-const userUpdate = async (req, res) => {    
-    client = await MongoClient.connect(MONGOURL);
+const userUpdate = async (req, res) => {
+  client = await MongoClient.connect(MONGOURL);
   try {
-
-    const {userId , nickName, profileImg} = req.body;
+    const { userId, nickName, profileImg } = req.body;
 
     const db = client.db("test");
     const collection = db.collection("users");
@@ -185,16 +167,16 @@ const userUpdate = async (req, res) => {
       $set: {
         nickName: nickName,
       },
-    };    
+    };
     const result = await collection.updateOne(filter, updateDoc);
-     // update code for 'contents' collection
-     const contentFilter = { userId: userId };
-     const contentUpdateDoc = {
-         $set: {
-             nickName: nickName,
-         },
-     };
-     await contentsCollection.updateMany(contentFilter, contentUpdateDoc);
+    // update code for 'contents' collection
+    const contentFilter = { userId: userId };
+    const contentUpdateDoc = {
+      $set: {
+        nickName: nickName,
+      },
+    };
+    await contentsCollection.updateMany(contentFilter, contentUpdateDoc);
 
     //해당세션 삭제후 재생성
     console.log("-------------------삭제후 재생성과정--------------------");
@@ -206,14 +188,12 @@ const userUpdate = async (req, res) => {
     await collection.deleteOne({ _id: cookieSessionId });
     console.log("-------------------삭제후 재생성과정--------------------");
     req.session.user = {
-        userId: userExist.userId,
-        nickName: nickName,  // 업데이트된 닉네임으로 변경
-        profileImg: userExist.profileImg,
-      };
-      
-    res.json(result);
+      userId: userExist.userId,
+      nickName: nickName, // 업데이트된 닉네임으로 변경
+      profileImg: userExist.profileImg,
+    };
 
-   
+    res.json(result);
   } catch (error) {
     res.json({ error: "서버에러" });
   }
@@ -226,12 +206,15 @@ const userDelete = async (req, res) => {
   try {
     const { userId } = req.body;
     const db = client.db("test");
-    const collection = db.collection("users");
-    const userExist = await collection.findOne({ userId: userId });
+    const userCollection = db.collection("users");
+    const contentCollection = db.collection("contents");
+    const userExist = await userCollection.findOne({ userId: userId });
     if (!userExist) {
       return res.json({ message: "유저가 없음" });
     }
-    await collection.deleteOne({ userId: userId });
+    await userCollection.deleteOne({ userId: userId });
+    await contentCollection.deleteMany({ userId: userId });
+
     res.json({ message: "유저정보삭제성공" });
   } catch (error) {
     res.json({ error: "서버에러" });
@@ -274,24 +257,22 @@ const getSessionStore = async (req, res) => {
 //세션 스토어 삭제
 const deleteLogout = async (req, res) => {
   try {
+    ///////////////////////특정 세션 _ID만 지우기///////////////////////////
     //브라우저 사용자 쿠키값 추출 + 디코딩
-    const connectSid = req.cookies["connect.sid"];
-    const cookieSessionId = connectSid.split(".")[0].split(":")[1];
-    console.log("-------------------쿠키세션아이디--------------------");
-    console.log(cookieSessionId);
+    // const connectSid = req.cookies["connect.sid"];
+    // const cookieSessionId = connectSid.split(".")[0].split(":")[1];
+    // console.log("-------------------쿠키세션아이디--------------------");
+    // console.log(cookieSessionId);
 
+    // const client = await MongoClient.connect(MONGOURL);
+    // const db = client.db("test");
+    // const collection = db.collection("sessions");
 
-    const client = await MongoClient.connect(MONGOURL);
-    const db = client.db("test");
-    const collection = db.collection("sessions");
-
-    const sessionId = await collection.findOne({ _id: cookieSessionId });
-    console.log(sessionId);
-    await collection.deleteOne({ _id: cookieSessionId });
-
+    // const sessionId = await collection.findOne({ _id: cookieSessionId });
+    // console.log(sessionId);
+    // await collection.deleteOne({ _id: cookieSessionId });
+    await req.session.destroy();
     console.log("세션 삭제 완료");
-
-    res.clearCookie("connect.sid");     
     res.send("로그아웃 성공");
   } catch (error) {
     console.error("세션 삭제 실패:", error);
