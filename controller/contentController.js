@@ -8,14 +8,14 @@ const MongoClient = require('mongodb').MongoClient;
 
 //content 등록
 const createBoard = async(req,res) => {
+  // MongoDB 클라이언트를 통해 데이터베이스에 연결
   const client = await MongoClient.connect(MONGOURL);
-  
   try{
     if(client){
       // 데이터베이스 && 컬렉션 선택
       const db = client.db("test"); 
       const collection = db.collection('contents');
-
+      //받은 데이터 객체분해할당
       const {userId, roomTitle, nickName, profileImg, content} = req.body;
       const currentDate = new Date();
       let image
@@ -34,10 +34,7 @@ const createBoard = async(req,res) => {
         date: currentDate  
       });
       res.json(result);
-      console.log(result);
-      console.log("게시물 등록 성공");
     }else {
-      console.log("MongoDB클라이언트 연결 실패")
       res.json({ success: false, message: "DB연결 실패" });
   }
     }
@@ -48,7 +45,7 @@ const createBoard = async(req,res) => {
 
 //입장한방의 동일한 roomTitle 의 contents 불러오기
 const getContent = async(req,res) => {
-  
+  // MongoDB 클라이언트를 통해 데이터베이스에 연결
   const client = await MongoClient.connect(MONGOURL);
   try{
     if(client){
@@ -67,7 +64,6 @@ const getContent = async(req,res) => {
     res.json(board);
 
     }else {
-      console.log("MongoDB클라이언트 연결 실패")
       res.json({ success: false, message: "DB연결 실패" });
   }
    
@@ -78,6 +74,7 @@ const getContent = async(req,res) => {
 
 //게시물 총 갯수 가져오기
 const getContentCnt = async(req, res) =>{
+  // MongoDB 클라이언트를 통해 데이터베이스에 연결
   const client = await MongoClient.connect(MONGOURL);
   try{
     if(client){
@@ -90,9 +87,7 @@ const getContentCnt = async(req, res) =>{
     const boardCnt = await collection.countDocuments({roomTitle:roomTitle });
 
     res.json(boardCnt)
-    console.log("현재room총게시물 :", boardCnt)
     }else {
-      console.log("MongoDB클라이언트 연결 실패")
       res.json({ success: false, message: "DB연결 실패" });
   }
     

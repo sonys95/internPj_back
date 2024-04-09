@@ -8,6 +8,7 @@ const MongoClient = require('mongodb').MongoClient;
 
 //room생성
 const createRoom = async(req,res) => {
+  // MongoDB 클라이언트를 통해 데이터베이스에 연결
   const client = await MongoClient.connect(MONGOURL);
   try{
     // MongoDB 클라이언트를 통해 데이터베이스에 연결
@@ -16,7 +17,6 @@ const createRoom = async(req,res) => {
     // 데이터베이스 && 컬렉션 선택
     const db = client.db("test"); 
     const collection = db.collection('rooms');
-    console.log(req.body)
     const { title } = req.body;
     const roomExist = await collection.findOne({title})
     //클라이언트가 입력한 title 추출후 동일한 이름의 방이 있는지 여부 체크후 방 생성
@@ -36,10 +36,8 @@ const createRoom = async(req,res) => {
       title,
       image
     });
-    console.log("룸 생성 완료");
     res.json(result)
   }else {
-    console.log("MongoDB클라이언트 연결 실패")
     res.json({ success: false, message: "DB연결 실패" });
 }
 }
@@ -57,17 +55,16 @@ const getRooms = async(req,res) => {
   const client = await MongoClient.connect(MONGOURL);
   try{
     if(client){
-      console.log("MongoDB클라이언트 연결 성공")
       // 데이터베이스 && 컬렉션 선택
       const db = client.db("test"); 
       const collection = db.collection('rooms');
 
       const cursor = await collection.find();
       const room = await cursor.toArray(); // 커서를 배열로 변환
+
       // console.log(room)
     res.json(room);
     }else {
-      console.log("MongoDB클라이언트 연결 실패")
       res.json({ success: false, message: "DB연결 실패" });
   }
   }catch(error){

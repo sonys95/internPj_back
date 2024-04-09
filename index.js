@@ -1,20 +1,21 @@
 const express = require('express');
-const bodyParser = require('body-parser');
-const mongoose = require('mongoose');
-const dotenv = require('dotenv');
-const cors = require('cors');
-const multer = require('multer');
-const path = require('path')
-const expressSession = require('express-session')
-const cookieParser = require('cookie-parser')
-const MongoStore = require("connect-mongo");
+const bodyParser = require('body-parser');  //HTTP요청 본문 파싱 미들웨어
+const dotenv = require('dotenv'); //환경변수 로드 라이브러리
+const cors = require('cors'); //Cross-Origin Resource Sharing을 처리 미들웨
+const multer = require('multer'); //파일 업로드 미들웨어
+//const path = require('path')  //경로 작업 라이브러리
+const expressSession = require('express-session') //어플리케이션 세션 관리 미들웨어 
+const cookieParser = require('cookie-parser') //HTTP쿠키 파싱 미들웨어
+const MongoStore = require("connect-mongo");  //mongoDB 사용하여 세션 저장 라이브러리
 
-const route = require('./routes/userRoute.js');
+const route = require('./routes/route.js'); //라우팅 정의 모듈
 
-const app = express();
-// app.use('/uploads', express.static(path.join(__dirname, '../intern/src/assets')));
-app.use(bodyParser.json());
-app.use(cookieParser());
+dotenv.config(); //환경변수 설정
+
+const app = express();  //express애플리케이션 초기화
+
+app.use(bodyParser.json()); //Json형식의 요청 본문 파싱
+app.use(cookieParser());  //쿠키파싱
 
 // 모든 출처에 대해 CORS를 허용하고 세션 쿠키 사용을 허용합니다.
 app.use(cors({
@@ -22,16 +23,14 @@ app.use(cors({
   credentials: true
 }));
 
-//////////////////////////////////////
+
 //세션 설정
-// 세션세팅
-dotenv.config();
 const MONGOURL = process.env.MONGO_URL;
 app.use(
   expressSession({
     secret: "my key", // 세션에 대한 암호화에 사용될 키
-    resave: true, // 세션 데이터의 변화가 없어도 세션을 다시 저장할지 여부
-    saveUninitialized: true, // 초기화되지 않은 세션을 저장할지 여부
+    resave: false, // 세션 데이터의 변화가 없어도 세션을 다시 저장할지 여부
+    saveUninitialized: false, // 초기화되지 않은 세션을 저장할지 여부
     rolling: false,//세션이 만료되기 전, 새로 고침 또는 페이지 이동이 일어나면 세션 만료를 갱신
     cookie: {
       secure: false ,
@@ -47,17 +46,6 @@ app.use(
   })
 );
 
-/////////////////////////////////////////
-
-
-// 로그아웃 처리 라우트
-app.get('/logout', (req, res) => {
-  // 세션에서 유저 정보 삭제
-  delete req.session.user;
-
-  res.send('로그아웃 성공');
-});
-//////////////////////////////////////////////////////////////////////
 // Multer 설정
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -71,64 +59,16 @@ const storage = multer.diskStorage({
   const upload = multer({ storage: storage });
 
 
-//////////////////////////////////////////////////////////////////////
-// DB연결
-// mongose연결방식
-// dotenv.config();
-// const PORT = process.env.PORT;
-// const MONGOURL = process.env.MONGO_URL;
-// mongoose.connect(MONGOURL).then(()=> {
-//     console.log("mongoseDB OK")
-//     app.listen(PORT, ()=> {
-//         console.log(`server is running on port ${PORT}`)
-//     })
-// })
-// .catch((error) => {
-//     console.log(error)
-// });
+//라우팅 설정
+app.use("/dbtest", upload.single('image'), route); // multer 미들웨어 추가
 
-//mongodb연결방식
-dotenv.config();
+
+//서버 연결
 const PORT = process.env.PORT;
-// const MONGOURL = process.env.MONGO_URL;
-// const MongoClient = require('mongodb').MongoClient;
-
-// connectMongoDB = async()=>{
-//   try{
-//     const client = await MongoClient.connect(MONGOURL);
-//     console.log("mongoDB OK")
-// app.listen(PORT, ()=> {
-//   console.log(`server is running on port ${PORT}`)
-// })
-//     return client;
-//   }catch(error){
-//     console.log("mongoDB 연결 실패", error)
-//     throw error;
-//   }
-// }
-// module.exports = connectMongoDB;
-
-// MongoClient.connect(MONGOURL).then(()=>{
-//   console.log("mongoDB OK")
-//   app.listen(PORT, ()=> {
-//             console.log(`server is running on port ${PORT}`)
-//         })
-// })
-// .catch((error)=>{
-//   console.log(error)
-// })
-
-
-////////////////////////////////////////////////////////////////////////
-
-
-
-
 app.listen(PORT, ()=> {
   console.log(`server is running on port ${PORT}`)
 })
 
 
-app.use("/dbtest", upload.single('image'), route); // multer 미들웨어 추가
 
 
