@@ -14,7 +14,7 @@ const {
   getContent,
   getContentCnt,
 } = require("../controller/contentController.js");
-const { createRoom, getRooms } = require("../controller/roomController.js");
+const { createRoom, getRooms, updateAllowedUser } = require("../controller/roomController.js");
 
 const route = express.Router();
 
@@ -42,7 +42,9 @@ route.delete("/deleteUser", deleteUser);
 //Post
 route.post("/createRoom", createRoom);
 //Get
-route.get("/getRooms", getRooms);
+route.get("/getRooms/:userId", getRooms);
+//update
+route.put("/updateAllowedUser", updateAllowedUser)
 
 //게시물
 //Post

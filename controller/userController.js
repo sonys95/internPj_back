@@ -20,11 +20,41 @@ const postCreateUser = async (req, res) => {
     //받은 데이터 객체분해할당
     const { userId, password, nickName } = req.body;
 
+   
+
     // 사용자 ID와 닉네임이 이미 존재하는지 확인
     const userExist = await collection.findOne({ userId });
     const nickNameExist = await collection.findOne({ nickName });
+
+      // 아이디 null 유효성 검사
+      if (!userId) {
+        return res.json({
+          success: false,
+          message: "아이디를 입력해 주세요",
+          type: "id",
+        });
+      }
     //동일한 아이디가 존재하지 않으면 진행
     if (!userExist) {
+
+       //정규표현식
+    const passwordRegex = /^(?=.*[a-zA-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{5,}$/;
+    // 비밀번호 유효성 검사
+    if (!passwordRegex.test(password)) {
+      return res.json({
+        success: false,
+        message: "비밀번호는 영어, 숫자, 특수문자의 조합으로 5자 이상이어야 합니다.",
+        type: "password",
+      });
+    }
+       // 닉네임 null 유효성 검사
+       if (!nickName) {
+        return res.json({
+          success: false,
+          message: "닉네임을 입력해 주세요",
+          type: "nickName",
+        });
+      }
       //동일한 닉네임이 존재하지 않으면 진행
       if (!nickNameExist) {
         // 비밀번호 암호화
