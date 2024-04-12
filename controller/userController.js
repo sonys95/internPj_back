@@ -26,18 +26,17 @@ const postCreateUser = async (req, res) => {
     const userExist = await collection.findOne({ userId });
     const nickNameExist = await collection.findOne({ nickName });
 
-      // 아이디 null 유효성 검사
-      if (!userId) {
-        return res.json({
-          success: false,
-          message: "아이디를 입력해 주세요",
-          type: "id",
-        });
-      }
+    // 아이디 null 유효성 검사
+    if (!userId) {
+      return res.json({
+        success: false,
+        message: "아이디를 입력해 주세요",
+        type: "id",
+      });
+    }
     //동일한 아이디가 존재하지 않으면 진행
     if (!userExist) {
-
-       //정규표현식
+    //정규표현식
     const passwordRegex = /^(?=.*[a-zA-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{5,}$/;
     // 비밀번호 유효성 검사
     if (!passwordRegex.test(password)) {
@@ -47,56 +46,56 @@ const postCreateUser = async (req, res) => {
         type: "password",
       });
     }
-       // 닉네임 null 유효성 검사
-       if (!nickName) {
-        return res.json({
-          success: false,
-          message: "닉네임을 입력해 주세요",
-          type: "nickName",
-        });
+    // 닉네임 null 유효성 검사
+    if (!nickName) {
+    return res.json({
+      success: false,
+      message: "닉네임을 입력해 주세요",
+      type: "nickName",
+      });
+    }
+    //동일한 닉네임이 존재하지 않으면 진행
+    if (!nickNameExist) {
+      // 비밀번호 암호화
+      const salt = await bcrypt.genSalt(10); // salt 생성 (길어질수록 보안성은 높아지지만 시간이 늘어남)
+      const hashedPassword = await bcrypt.hash(password, salt); // 비밀번호 암호화 (입력받은pw + salt 값 랜덤데이터를 더해 해시함수에 추가)
+      // 임의의 1~5 랜덤값 생성하여 미리 지정된 유저프로필사진 src 주소 제공
+      const randomValue = Math.floor(Math.random() * 5) + 1;
+      let profileImg;
+      switch (randomValue) {
+        case 1:
+          profileImg = "../assets/profileImg/img1.png";
+          break;
+        case 2:
+          profileImg = "../assets/profileImg/img2.png";
+          break;
+        case 3:
+          profileImg = "../assets/profileImg/img3.png";
+          break;
+        case 4:
+          profileImg = "../assets/profileImg/img4.png";
+          break;
+        case 5:
+          profileImg = "../assets/profileImg/img5.png";
+          break;
+        default:
+          profileImg = ""; // 기본값
       }
-      //동일한 닉네임이 존재하지 않으면 진행
-      if (!nickNameExist) {
-        // 비밀번호 암호화
-        const salt = await bcrypt.genSalt(10); // salt 생성 (길어질수록 보안성은 높아지지만 시간이 늘어남)
-        const hashedPassword = await bcrypt.hash(password, salt); // 비밀번호 암호화 (입력받은pw + salt 값 랜덤데이터를 더해 해시함수에 추가)
-        // 임의의 1~5 랜덤값 생성하여 미리 지정된 유저프로필사진 src 주소 제공
-        const randomValue = Math.floor(Math.random() * 5) + 1;
-        let profileImg;
-        switch (randomValue) {
-          case 1:
-            profileImg = "../assets/profileImg/img1.png";
-            break;
-          case 2:
-            profileImg = "../assets/profileImg/img2.png";
-            break;
-          case 3:
-            profileImg = "../assets/profileImg/img3.png";
-            break;
-          case 4:
-            profileImg = "../assets/profileImg/img4.png";
-            break;
-          case 5:
-            profileImg = "../assets/profileImg/img5.png";
-            break;
-          default:
-            profileImg = ""; // 기본값
-        }
-        // 클라이언트 userData(userId, password(bcrypt), nickname) + 서버 userData(profileImg) 값들 DB에 저장
-        await collection.insertOne({
-          userId,
-          password: hashedPassword, // 암호화된 비밀번호 저장,
-          nickName,
-          profileImg,
-        });
-        return res.json({ success: true });
-      } else {
-        return res.json({
-          success: false,
-          message: "이미 사용 중인 닉네임입니다.",
-          type: "nickName",
-        });
-      }
+      // 클라이언트 userData(userId, password(bcrypt), nickname) + 서버 userData(profileImg) 값들 DB에 저장
+      await collection.insertOne({
+        userId,
+        password: hashedPassword, // 암호화된 비밀번호 저장,
+        nickName,
+        profileImg,
+      });
+      return res.json({ success: true });
+    } else {
+      return res.json({
+        success: false,
+        message: "이미 사용 중인 닉네임입니다.",
+        type: "nickName",
+      });
+    }
     } else {
       return res.json({
         success: false,
