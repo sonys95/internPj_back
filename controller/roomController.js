@@ -53,7 +53,7 @@ const createRoom = async(req,res) => {
 //전체 rooms정보 불러오기
 const getRooms = async (req, res) => {
   try {
-    // 현재 사용자의 userId를 가져오는 예시
+    // 현재 사용자의 userId를 가져오기
     // const userId = req.user.userId; // 사용자의 userId를 요청에서 추출
     const userId = req.params.userId;
     console.log(userId);

@@ -17,7 +17,7 @@ const app = express();  //express애플리케이션 초기화
 app.use(bodyParser.json()); //Json형식의 요청 본문 파싱
 app.use(cookieParser());  //쿠키파싱
 
-// 모든 출처에 대해 CORS를 허용하고 세션 쿠키 사용을 허용합니다.
+// 모든 출처에 대해 CORS를 허용하고 세션 쿠키 사용을 허용
 app.use(cors({
   origin: true,
   credentials: true

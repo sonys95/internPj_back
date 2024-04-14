@@ -85,7 +85,7 @@ const getContentCnt = async(req, res) =>{
       // 데이터베이스 && 컬렉션 선택
       const db = client.db("test"); 
       const collection = db.collection('contents');
-
+      //방제목 params로 전달
       const roomTitle = req.params.roomTitle
     //MongoDB의 내장 함수 countDocuments => 쿼리 조건에 맞는 문서의 수를 반환
     const boardCnt = await collection.countDocuments({roomTitle:roomTitle });
