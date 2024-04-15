@@ -54,10 +54,6 @@ const getContent = async(req,res) => {
       const collection = db.collection('contents');
        //클라이언트 params로 받은 roomTitle값으로 동일한 roomTitle 게시물 불러오기
     const roomTitle = req.params.roomTitle
-    // const creator = req.params.creator;
-    // console.log("------creator--------")
-    // console.log(creator)
-
     const cursor = await collection.find({roomTitle:roomTitle});
     const board = await cursor.toArray(); // 커서를 배열로 변환
     // content가 없을경우

@@ -3,7 +3,6 @@ const bodyParser = require('body-parser');  //HTTP요청 본문 파싱 미들웨
 const dotenv = require('dotenv'); //환경변수 로드 라이브러리
 const cors = require('cors'); //Cross-Origin Resource Sharing을 처리 미들웨
 const multer = require('multer'); //파일 업로드 미들웨어
-//const path = require('path')  //경로 작업 라이브러리
 const expressSession = require('express-session') //어플리케이션 세션 관리 미들웨어 
 const cookieParser = require('cookie-parser') //HTTP쿠키 파싱 미들웨어
 const MongoStore = require("connect-mongo");  //mongoDB 사용하여 세션 저장 라이브러리
@@ -55,13 +54,9 @@ const storage = multer.diskStorage({
       cb(null, file.originalname);  // 파일 이름 설정
     }
   });
-  
   const upload = multer({ storage: storage });
-
-
 //라우팅 설정
 app.use("/dbtest", upload.single('image'), route); // multer 미들웨어 추가
-
 
 //서버 연결
 const PORT = process.env.PORT;
